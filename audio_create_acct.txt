@@ -1,0 +1,143 @@
+# contains password setup and validation
+
+import tkinter as tk
+from tkinter import *
+
+
+class AccountGUI:
+    def __init__(acct):
+
+        acct.account_window = tk.Tk()
+        acct.account_window.title("Account Creation")
+        acct.account_window.minsize(width=500,height=250)   # set the window size
+
+        for c in range(4):
+            acct.account_window.columnconfigure(c, minsize=50)
+
+        for r in range(12):
+            acct.account_window.rowconfigure(r, minsize=20)
+
+        acct.account_window.info_label1 = tk.Label(acct.account_window, \
+                                           text='User name: ',font=("Helvetica",10))
+        acct.account_window.info_label1.grid(row=2,column=2,columnspan=2)
+
+        acct.account_window.userName_entry = tk.Entry(acct.account_window, \
+                                            width = 15, justify='right', font=("Helvetica",10))
+        acct.account_window.userName_entry.grid(row=2, column=4, sticky=W)
+        acct.account_window.userName_entry.focus_force()
+
+
+        acct.account_window.info_label1 = tk.Label(acct.account_window, \
+                                           text='Create a password of at least nine (9) characters,',font=("Helvetica",10))
+        acct.account_window.info_label1.grid(row=4,column=2,columnspan=3)
+
+        acct.account_window.info_label1 = tk.Label(acct.account_window, \
+                                           text='that contains at least one digit, one uppercase,',font=("Helvetica",10))
+        acct.account_window.info_label1.grid(row=5,column=2,columnspan=3)
+
+        acct.account_window.info_label2 = tk.Label(acct.account_window, \
+                                           text='and one lowercase letter.',font=("Helvetica",10))
+        acct.account_window.info_label2.grid(row=6,column=2,columnspan=3)
+
+   
+        acct.account_window.password_label = tk.Label(acct.account_window, text='Password: ',\
+                                            justify='right',font=("Helvetica",10))
+        acct.account_window.password_label.grid(row=8,column=2, columnspan=2)
+
+
+        acct.account_window.password_entry = tk.Entry(acct.account_window, width = 15, justify='right', font=("Helvetica",10))
+        acct.account_window.password_entry.grid(row=8, column=4, sticky=W)
+
+            
+        acct.account_window.create_button = tk.Button(acct.account_window, text='Create Account', \
+                                             font=("Helvetica",10), command=acct.verify_new_user)
+        acct.account_window.create_button.grid(row=10, column=3)
+        
+    
+        # lift this window to the top
+        acct.account_window.lift()
+
+
+    # the validation functions
+    # The create account button calls verify_new_userName
+
+    # This function verifies that a new user is in fact a new user name
+    def verify_new_user(acct):
+        valid = True
+        newUser = (acct.account_window.userName_entry.get())    # get the entry
+        print('newUser is:  ' + newUser + '\n')
+        try:
+            userDataFile = open('AudioAccts.txt', 'r')     # open file to read
+
+            # loop line by line to check the values
+            for userTemp in userDataFile:
+                print('userTemp from file is: ' + userTemp)
+                if newUser == userTemp.rstrip():
+                    valid = False
+                                
+            userDataFile.close()
+
+            if (valid == False):   # if it exists in the file
+                tkinter.messagebox.showinfo('Invalid User Name','That user name already exists.')
+                acct.account_window.userName_entry.delete(0,END)
+                acct.account_window.userName_entry.focus_force()     # give it the focus
+                acct.account_window.lift()
+            else:   # not in the file...verify pass and send the username to write if pass is good
+                acct.verify_new_pass(newUser)
+                
+        except IOError:
+            print('No File exists.')
+
+
+
+
+    def verify_new_pass(acct, user):
+        valid = False
+        txt = (acct.account_window.password_entry.get())     # get the password entry
+        print('Getting password   ' + txt)
+
+        if acct.verify_pass(txt):   # if the call to verify password criteria is met
+            userFile = open('acct_user_names.txt', 'a')   # open the user file to append it
+            userFile.write(user + '\n')                   # write the user name and line feed
+            userFile.close()
+
+            passwordFile = open('AudioPW.txt', 'a')   # open the user PW file to append it
+            passwordFile.write(txt + '\n')                        # add the password to the file with a line feed
+            passwordFile.close()
+            tk.messagebox.showinfo('Account Creation','Account Successfully Created.')
+            acct.account_window.lift()
+            acct.account_window.destroy()
+        else:
+            tk.messagebox.showinfo('Password Validation', '"' + txt + '"' + ' is not a valid password.')
+            acct.account_window.lift()
+            acct.account_window.password_entry.delete(0,END)     # clear the text
+            acct.account_window.focus_force()
+            acct.account_window.password_entry.focus_force()     # give it the focus
+
+
+
+
+    # walk the string to validate (ref page 425) - note that "acct" must also be passed to this
+    def verify_pass(acct,txt):
+        
+        isValid = False
+        longEnough = False
+        hasUpper = False
+        hasLower = False
+        hasDigit = False
+
+        if len(txt) >= 9:
+            longEnough = True
+
+            for ch in txt:
+                if ch.isupper():
+                    hasUpper = True
+                if ch.islower():
+                    hasLower = True
+                if ch.isdigit():
+                    hasDigit = True
+
+        if longEnough and hasUpper and hasLower and hasDigit:
+            isValid = True
+
+        return isValid        
